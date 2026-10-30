@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfred — Your AI Copilot for Streaming and Everything Else</title>
+<style>
+  :root {
+    --bg: #08080b;
+    --panel: #0e0e13;
+    --panel2: #121218;
+    --border: #1e1e28;
+    --text: #f2f0fa;
+    --muted: #8a8f9c;
+    --muted2: #6b7280;
+    --accent: #8b5cf6;
+    --accent-light: #a78bfa;
+    --accent-dim: rgba(139, 92, 246, 0.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6; overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 40px; background: rgba(8, 8, 11, 0.82);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 4px; font-size: 15px; }
+  .nav-links { display: flex; gap: 30px; font-size: 14px; color: var(--muted); }
+  .nav-links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: #fff; border: 0; border-radius: 12px;
+    padding: 12px 24px; font-size: 14.5px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background .18s, transform .18s;
+  }
+  .btn:hover { background: var(--accent-light); transform: translateY(-1px); }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn.ghost:hover { background: var(--panel2); }
+  .btn.big { padding: 15px 34px; font-size: 16px; border-radius: 14px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 170px 40px 90px; text-align: center; max-width: 1060px; margin: 0 auto;
+    position: relative;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: -120px 0 0; pointer-events: none;
+    background: radial-gradient(640px 380px at 50% 0%, rgba(139,92,246,.13), transparent 70%);
+  }
+  .eyebrow {
+    display: inline-block; font-size: 12px; letter-spacing: 3px; font-weight: 700;
+    color: var(--accent-light); border: 1px solid var(--border); border-radius: 999px;
+    padding: 7px 18px; margin-bottom: 26px; background: var(--accent-dim);
+  }
+  h1 { font-size: 58px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.12; margin-bottom: 20px; }
+  h1 .grad {
+    background: linear-gradient(120deg, var(--accent-light), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.sub { font-size: 18px; color: var(--muted); max-width: 640px; margin: 0 auto 36px; }
+  .cta-row { display: flex; gap: 14px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .fine { font-size: 13px; color: var(--muted2); }
+
+  /* app preview window */
+  .preview {
+    margin: 70px auto 0; max-width: 880px; border: 1px solid var(--border);
+    border-radius: 18px; overflow: hidden; background: var(--panel);
+    box-shadow: 0 40px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(139,92,246,.06), 0 0 90px rgba(139,92,246,.07);
+  }
+  .preview-bar { display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-bottom: 1px solid var(--border); background: var(--panel2); }
+  .preview-bar i { width: 11px; height: 11px; border-radius: 50%; background: #2a2a35; display: block; }
+  .preview-body { display: flex; min-height: 380px; text-align: left; }
+  .preview-side { width: 190px; min-width: 190px; border-right: 1px solid var(--border); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .pv-logo { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: 4px; font-size: 12px; padding: 2px 10px 18px; }
+  .pv-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; font-size: 13px; color: var(--muted); }
+  .pv-item.on { background: var(--accent-dim); color: #fff; }
+  .pv-item i { width: 15px; height: 15px; border-radius: 5px; background: #2a2a35; display: block; flex: none; }
+  .pv-item.on i { background: var(--accent); }
+  .preview-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 40px; position: relative; }
+  .preview-main::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  #orb { position: relative; }
+  .pv-word { font-weight: 700; letter-spacing: 8px; font-size: 15px; color: #e8e6f2; position: relative; }
+  .pv-pill { position: relative; font-size: 12.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; background: rgba(20,20,28,.7); }
+  .pv-pill b { color: var(--accent-light); font-weight: 600; }
+
+  /* ---------- Sections ---------- */
+  section.block { padding: 100px 40px; max-width: 1060px; margin: 0 auto; }
+  .kicker { font-size: 12px; letter-spacing: 3px; font-weight: 700; color: var(--accent-light); margin-bottom: 14px; }
+  h2 { font-size: 38px; font-weight: 800; letter-spacing: -1px; margin-bottom: 14px; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 620px; margin-bottom: 50px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+    padding: 30px 26px; transition: transform .18s, border-color .18s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.4); }
+  .card .ico {
+    width: 46px; height: 46px; border-radius: 13px; background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: var(--accent-light);
+  }
+  .card h3 { font-size: 18px; margin-bottom: 10px; }
+  .card p { font-size: 14.5px; color: var(--muted); }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 30px 26px; position: relative; }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-weight: 700; font-size: 16px; margin-bottom: 20px;
+  }
+  .step h3 { font-size: 18px; margin-bottom: 10px; }
+  .step p { font-size: 14.5px; color: var(--muted); }
+  .step code { background: #1a1a24; border: 1px solid var(--border); border-radius: 7px; padding: 2px 8px; font-size: 13px; color: var(--accent-light); }
+
+  /* download */
+  .dl-card {
+    background: linear-gradient(160deg, #14141d, #0e0e13 60%);
+    border: 1px solid rgba(139,92,246,.3); border-radius: 24px;
+    padding: 64px 48px; text-align: center; position: relative; overflow: hidden;
+  }
+  .dl-card::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(520px 260px at 50% 0%, rgba(139,92,246,.16), transparent 70%);
+  }
+  .dl-card h2 { position: relative; }
+  .dl-card p { color: var(--muted); margin-bottom: 30px; position: relative; }
+  .dl-meta { display: flex; gap: 26px; justify-content: center; margin-top: 26px; font-size: 13px; color: var(--muted2); position: relative; flex-wrap: wrap; }
+  .dl-meta span b { color: var(--muted); font-weight: 600; }
+
+  /* faq */
+  .faq { border-top: 1px solid var(--border); }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-q {
+    width: 100%; background: none; border: 0; color: var(--text); cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px;
+    padding: 24px 4px; font-size: 17px; font-weight: 600; font-family: inherit; text-align: left;
+  }
+  .faq-q svg { flex: none; transition: transform .2s; color: var(--accent-light); }
+  .faq-item.open .faq-q svg { transform: rotate(180deg); }
+  .faq-a { display: none; padding: 0 4px 26px; color: var(--muted); font-size: 15px; max-width: 720px; }
+  .faq-item.open .faq-a { display: block; }
+
+  footer { border-top: 1px solid var(--border); padding: 44px 40px; display: flex; justify-content: space-between; align-items: center; max-width: 1060px; margin: 0 auto; flex-wrap: wrap; gap: 18px; }
+  footer .links { display: flex; gap: 24px; font-size: 13.5px; color: var(--muted); }
+  footer .links a:hover { color: var(--text); }
+  footer .copy { font-size: 13px; color: var(--muted2); }
+
+  @media (max-width: 860px) {
+    h1 { font-size: 40px; }
+    .grid, .steps { grid-template-columns: 1fr; }
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    section.block, .hero { padding-left: 20px; padding-right: 20px; }
+    .preview-side { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="#top">
+    <svg width="30" height="16" viewBox="0 0 100 42"><path d="M50 10 C44 3 36 1 28 5 C20 9 13 7 6 3 C8 11 12 17 18 21 C12 23 7 29 5 37 C13 33 19 33 25 35 C31 37 40 35 50 29 C60 35 69 37 75 35 C81 33 87 33 95 37 C93 29 88 23 82 21 C88 17 92 11 94 3 C87 7 80 9 72 5 C64 1 56 3 50 10 Z" fill="#8b5cf6"/></svg>
+    ALFRED
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <a class="btn" href="#download">Download</a>
+</nav>
+
+<header class="hero" id="top">
+  <span class="eyebrow">ALFRED FOR WINDOWS</span>
+  <h1>Talk to your PC.<br><span class="grad">It listens.</span></h1>
+  <p class="sub">Alfred is a voice-controlled AI copilot for streamers and power users. Run your stream, your chat, and your whole computer — hands-free.</p>
+  <div class="cta-row">
+    <a class="btn big" href="#download">Download for Windows</a>
+    <a class="btn big ghost" href="#how">See how it works</a>
+  </div>
+  <div class="fine">Free while in development · Windows 10 / 11</div>
+
+  <div class="preview">
+    <div class="preview-bar"><i></i><i></i><i></i></div>
+    <div class="preview-body">
+      <div class="preview-side">
+        <div class="pv-logo">
+          <svg width="22" height="11" viewBox="0 0 100 42"><path d="M50 10 C44 3 36 1 28 5 C20 9 13 7 6 3 C8 11 12 17 18 21 C12 23 7 29 5 37 C13 33 19 33 25 35 C31 37 40 35 50 29 C60 35 69 37 75 35 C81 33 87 33 95 37 C93 29 88 23 82 21 C88 17 92 11 94 3 C87 7 80 9 72 5 C64 1 56 3 50 10 Z" fill="#8b5cf6"/></svg>
+          ALFRED
+        </div>
+        <div class="pv-item"><i></i>Home</div>
+        <div class="pv-item on"><i></i>Stream Panel</div>
+        <div class="pv-item"><i></i>Overlays</div>
+        <div class="pv-item"><i></i>Chat</div>
+        <div class="pv-item"><i></i>Clipping</div>
+        <div class="pv-item"><i></i>Analytics</div>
+      </div>
+      <div class="preview-main">
+        <canvas id="orb" width="220" height="220"></canvas>
+        <div class="pv-word">ALFRED</div>
+        <div class="pv-pill">Hold <b>Mouse5</b> to talk</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="features">
+  <div class="kicker">FEATURES</div>
+  <h2>One copilot. Every job.</h2>
+  <p class="lede">Alfred sits beside your stream and your desktop at the same time — moderating, clipping, producing, and taking orders by voice.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <h3>Your own mod</h3>
+      <p>Alfred watches chat around the clock. Times out trolls, welcomes new followers, and never sleeps through a raid.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
+      <h3>Your clipper</h3>
+      <p>Great moments get clipped the second they happen — then posted to Shorts, TikTok, and Instagram.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <h3>Your channel manager</h3>
+      <p>One sentence updates your title, category, and chat settings. Hosting an event? Say the word.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
+      <h3>Your analyst</h3>
+      <p>After every stream, Alfred breaks down what worked — where chat lit up, where it went quiet, and what to try next.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <h3>Your OBS producer</h3>
+      <p>Builds scenes, checks your audio, and takes you live — without alt-tabbing out of your game.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+      <h3>Your whole PC</h3>
+      <p>Not just streaming. Open apps, control music, manage files, run your setup — all by voice.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="kicker">HOW IT WORKS</div>
+  <h2>Live in three steps.</h2>
+  <p class="lede">No complicated setup. Download, connect, talk.</p>
+  <div class="steps">
+    <div class="step">
+      <h3>Download</h3>
+      <p>Grab the installer for Windows. One setup file and you're in — no command line, no Python, no headaches.</p>
+    </div>
+    <div class="step">
+      <h3>Connect</h3>
+      <p>Link Twitch, YouTube, TikTok, OBS, Discord, and your Google account. Your keys stay on your machine.</p>
+    </div>
+    <div class="step">
+      <h3>Talk</h3>
+      <p>Hold <code>Mouse5</code> — or your own hotkey — and say what you want. Alfred handles the rest, even mid-game.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="download">
+  <div class="dl-card">
+    <h2>Get Alfred</h2>
+    <p>Free while in development. One installer, full copilot.</p>
+    <a class="btn big" href="#" onclick="this.textContent='Installer publishing soon';return false;">Download for Windows</a>
+    <div class="dl-meta">
+      <span><b>Windows</b> 10 / 11 · 64-bit</span>
+      <span><b>Size</b> ~180 MB</span>
+      <span><b>Setup</b> about a minute</span>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="faq">
+  <div class="kicker">FAQ</div>
+  <h2>Questions, answered.</h2>
+  <p class="lede">The essentials on setup, platforms, and privacy.</p>
+  <div class="faq">
+    <div class="faq-item">
+      <button class="faq-q">What do I need to run Alfred?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="faq-a">Windows 10 or 11 (64-bit), a microphone, and an internet connection for the AI brain. That's the whole list.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Which platforms does it connect to?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="faq-a">Twitch, YouTube, TikTok, OBS Studio, Discord, Spotify, and Google services — Gmail, YouTube, Drive, and Calendar. More on the way.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Does it work while I'm gaming?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="faq-a">Yes. Push-to-talk listens globally, so you can talk to Alfred mid-game without alt-tabbing or losing focus.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Is my data private?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="faq-a">Your API keys and account tokens stay on your PC — they never leave your machine except to talk to the services you connect. Voice goes to the AI provider you choose, nothing else.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">How much does it cost?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="faq-a">Free while in development. Download it, use all of it, tell us what breaks.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a class="brand" href="#top" style="font-size:13px;">
+    <svg width="24" height="12" viewBox="0 0 100 42"><path d="M50 10 C44 3 36 1 28 5 C20 9 13 7 6 3 C8 11 12 17 18 21 C12 23 7 29 5 37 C13 33 19 33 25 35 C31 37 40 35 50 29 C60 35 69 37 75 35 C81 33 87 33 95 37 C93 29 88 23 82 21 C88 17 92 11 94 3 C87 7 80 9 72 5 C64 1 56 3 50 10 Z" fill="#8b5cf6"/></svg>
+    ALFRED
+  </a>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#download">Download</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="copy">© 2026 Alfred</div>
+</footer>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(function(q){
+    q.addEventListener('click', function(){
+      var item = q.closest('.faq-item');
+      var wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(function(x){ x.classList.remove('open'); });
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+  // static dot orb in the hero preview
+  (function(){
+    var cv = document.getElementById('orb');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), N = 15, s = 220 / N;
+    ctx.fillStyle = '#4a4f5e';
+    for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) {
+      var x = (i + 0.5) * s, y = (j + 0.5) * s, dx = x - 110, dy = y - 110;
+      if (dx * dx + dy * dy < 92 * 92) { ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.2832); ctx.fill(); }
+    }
+    ctx.fillStyle = 'rgba(139,92,246,.55)';
+    for (var k = 0; k < 40; k++) {
+      var a = Math.random() * 6.2832, r = Math.random() * 88;
+      ctx.beginPath(); ctx.arc(110 + Math.cos(a) * r, 110 + Math.sin(a) * r, 2.4, 0, 6.2832); ctx.fill();
+    }
+  })();
+</script>
+</body>
+</html>
